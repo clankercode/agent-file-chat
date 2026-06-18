@@ -41,37 +41,37 @@
       "id": "4",
       "subject": "Slice D: unit + integration tests",
       "description": "tests/test_unit.py (pytest for lib + entry points), tests/test_inotify.sh (subprocess monitor + send + timing), tests/test_install.sh (PATH + symlinks); commit.",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Writing unit and integration tests",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447052,
-      "updatedAt": 1781770420054
+      "updatedAt": 1781771610132
     },
     {
       "id": "5",
       "subject": "Slice E: e2e with tmux + two pi agents",
       "description": "tests/test_e2e_pi.sh — spin up tmux, two pi --print panes, give each the skill, scripted exchange, assert transcript; record the model that worked in tests/MODEL_NOTES.md.",
-      "status": "pending",
+      "status": "completed",
       "activeForm": "Running e2e test with tmux and two pi agents",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447052,
-      "updatedAt": 1781760447052
+      "updatedAt": 1781772547623
     },
     {
       "id": "6",
       "subject": "Slice F: GitHub repo creation + final docs",
       "description": "gh repo create clankercode/agent-file-chat --public with description; push; write README.md (overview, install, usage, e2e) and LICENSE (MIT).",
-      "status": "pending",
+      "status": "in_progress",
       "activeForm": "Creating GitHub repo and final docs",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447053,
-      "updatedAt": 1781760447053
+      "updatedAt": 1781772547624
     },
     {
       "id": "7",
