@@ -17,25 +17,25 @@
       "id": "2",
       "subject": "Slice B: design + build simple-agent-room scripts",
       "description": "Design the room file format (JSON-Lines) and location (~/.cache/simple-agent-room/); build simple_room_lib + send/monitor/scan Python entry points; expose as simple-room-send/-monitor/-scan on PATH; commit.",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Building simple-agent-room scripts",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447051,
-      "updatedAt": 1781760537834
+      "updatedAt": 1781770314086
     },
     {
       "id": "3",
       "subject": "Slice C: SKILL.md for simple-agent-room with flowcharts",
       "description": "Write skills/simple-agent-room/SKILL.md with ASCII flowcharts (send, monitor, scan, e2e topology), usage examples that hide paths, the self-filter pattern, inotify reasoning; commit.",
-      "status": "pending",
+      "status": "in_progress",
       "activeForm": "Writing SKILL.md for simple-agent-room",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447051,
-      "updatedAt": 1781760447051
+      "updatedAt": 1781770314087
     },
     {
       "id": "4",
