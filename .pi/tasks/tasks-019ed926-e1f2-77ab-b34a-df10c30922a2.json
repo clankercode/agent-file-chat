@@ -5,25 +5,25 @@
       "id": "1",
       "subject": "Slice A: scaffold + simple-agent-comms rename",
       "description": "git init (done), create skills/simple-agent-comms/ by copying & renaming subagent-file-comms; tweak SKILL.md metadata and content; install global symlinks in ~/.claude/skills/ and ~/.agents/skills/; commit.",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Setting up scaffold and simple-agent-comms",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447049,
-      "updatedAt": 1781760478413
+      "updatedAt": 1781760537832
     },
     {
       "id": "2",
       "subject": "Slice B: design + build simple-agent-room scripts",
       "description": "Design the room file format (JSON-Lines) and location (~/.cache/simple-agent-room/); build simple_room_lib + send/monitor/scan Python entry points; expose as simple-room-send/-monitor/-scan on PATH; commit.",
-      "status": "pending",
+      "status": "in_progress",
       "activeForm": "Building simple-agent-room scripts",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447051,
-      "updatedAt": 1781760447051
+      "updatedAt": 1781760537834
     },
     {
       "id": "3",
