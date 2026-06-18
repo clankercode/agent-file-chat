@@ -133,4 +133,7 @@ tests/
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Dual-licensed under [The Unlicense](https://unlicense.org/) and
+[CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
+You may pick whichever you prefer; both place this work in the public
+domain. See [LICENSE](LICENSE) for the full texts.

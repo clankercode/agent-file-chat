@@ -1,7 +1,7 @@
 ---
 name: simple-agent-room
 description: One-file-per-room chat log for many-to-many inter-agent messaging. The room is a JSON-Lines append-only file under ~/.cache/simple-agent-room/, and three CLI tools (simple-room-send, simple-room-monitor, simple-room-scan) on $PATH are all an agent needs to know. The monitor filters out the local agent's own messages by default and uses inotify (no polling), so it slots directly into a `Monitor(...)` tool as the command. Use when several agents need to discover each other, exchange mid-task findings, or coordinate without depending on c2c / SendMessage brokers.
-license: MIT
+license: Unlicense + CC0-1.0
 ---
 
 # Simple agent room

@@ -1,7 +1,7 @@
 ---
 name: simple-agent-comms
 description: Two-way streaming comms with a long-running background subagent via a pair of append-only files + a Monitor, when you need its intermediate updates/questions (not just its final report) and inter-agent messaging (c2c / SendMessage-to-coordinator) is unreliable. Use when coordinating with a spawned Agent that runs for a while. The "simple" variant picks a single cache directory and stable script names so the agent never needs to know file paths.
-license: MIT
+license: Unlicense + CC0-1.0
 ---
 
 # Simple agent ↔ coordinator file comms
