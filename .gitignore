@@ -1,0 +1,30 @@
+# Local environment
+.env
+.envrc
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Test outputs
+tests/transcripts/
+tests/.cache/
+tests/*.log
+tests/*.tmp
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local scratch
+reviews/
+notes/
+scratch/
+*.local

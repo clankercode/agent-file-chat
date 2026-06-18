@@ -1,0 +1,89 @@
+{
+  "nextId": 8,
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "Slice A: scaffold + simple-agent-comms rename",
+      "description": "git init (done), create skills/simple-agent-comms/ by copying & renaming subagent-file-comms; tweak SKILL.md metadata and content; install global symlinks in ~/.claude/skills/ and ~/.agents/skills/; commit.",
+      "status": "in_progress",
+      "activeForm": "Setting up scaffold and simple-agent-comms",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447049,
+      "updatedAt": 1781760478413
+    },
+    {
+      "id": "2",
+      "subject": "Slice B: design + build simple-agent-room scripts",
+      "description": "Design the room file format (JSON-Lines) and location (~/.cache/simple-agent-room/); build simple_room_lib + send/monitor/scan Python entry points; expose as simple-room-send/-monitor/-scan on PATH; commit.",
+      "status": "pending",
+      "activeForm": "Building simple-agent-room scripts",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447051,
+      "updatedAt": 1781760447051
+    },
+    {
+      "id": "3",
+      "subject": "Slice C: SKILL.md for simple-agent-room with flowcharts",
+      "description": "Write skills/simple-agent-room/SKILL.md with ASCII flowcharts (send, monitor, scan, e2e topology), usage examples that hide paths, the self-filter pattern, inotify reasoning; commit.",
+      "status": "pending",
+      "activeForm": "Writing SKILL.md for simple-agent-room",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447051,
+      "updatedAt": 1781760447051
+    },
+    {
+      "id": "4",
+      "subject": "Slice D: unit + integration tests",
+      "description": "tests/test_unit.py (pytest for lib + entry points), tests/test_inotify.sh (subprocess monitor + send + timing), tests/test_install.sh (PATH + symlinks); commit.",
+      "status": "pending",
+      "activeForm": "Writing unit and integration tests",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447052,
+      "updatedAt": 1781760447052
+    },
+    {
+      "id": "5",
+      "subject": "Slice E: e2e with tmux + two pi agents",
+      "description": "tests/test_e2e_pi.sh — spin up tmux, two pi --print panes, give each the skill, scripted exchange, assert transcript; record the model that worked in tests/MODEL_NOTES.md.",
+      "status": "pending",
+      "activeForm": "Running e2e test with tmux and two pi agents",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447052,
+      "updatedAt": 1781760447052
+    },
+    {
+      "id": "6",
+      "subject": "Slice F: GitHub repo creation + final docs",
+      "description": "gh repo create clankercode/agent-file-chat --public with description; push; write README.md (overview, install, usage, e2e) and LICENSE (MIT).",
+      "status": "pending",
+      "activeForm": "Creating GitHub repo and final docs",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447053,
+      "updatedAt": 1781760447053
+    },
+    {
+      "id": "7",
+      "subject": "Slice G: PIRFL review pass",
+      "description": "Run correctness + goal-fit + edge-case + integration reviews against acceptance criteria; fix accepted issues; commit.",
+      "status": "pending",
+      "activeForm": "Running PIRFL review and fixing accepted issues",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781760447053,
+      "updatedAt": 1781760447053
+    }
+  ]
+}
