@@ -372,7 +372,7 @@ def inotify_follow(
     file_wd_locals: dict[str, Optional[int]] = {"wd": None}
 
     handler = _Handler()
-    notifier = pyinotify.Notifier(wm, handler, timeout=1000)  # 1s tick
+    notifier = pyinotify.Notifier(wm, handler)
     _ensure_file_watch(notifier)
     # Drain any pre-existing tail once on start (so a new subscriber sees
     # recent history if the caller wants it; callers that don't want this
@@ -381,12 +381,27 @@ def inotify_follow(
     # ``--backfill`` flag in the monitor script controls how much of it.
     _drain()
 
+    # We use select() on the inotify fd ourselves rather than
+    # notifier.process_events() because the latter does not honour a
+    # timeout reliably across pyinotify versions — it has been observed
+    # to spin at 100% CPU.  The correct pattern is: wait on the fd, then
+    # read_events() + process_events() when it fires.
+    import select
+    fd = wm.get_fd()
+
     try:
         while True:
             if stop is not None and stop():
                 break
-            notifier.check_events(timeout=1000)
-            notifier.read_events()
-            notifier.process_events()
+            try:
+                r, _, _ = select.select([fd], [], [], 0.5)
+            except (OSError, ValueError):
+                break
+            if r:
+                try:
+                    notifier.read_events()
+                    notifier.process_events()
+                except (OSError, pyinotify.NotifierError):
+                    break
     except KeyboardInterrupt:
         pass
