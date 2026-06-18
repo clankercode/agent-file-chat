@@ -131,12 +131,13 @@ on local filesystems.
 
 ## Reference
 
-### `simple-room-send <room> [-m MSG] [-k {msg,system,meta}] [-a AGENT] [--stdin]`
+### `simple-room-send <room> [MSG] [-m MSG] [-k {msg,system,meta}] [-a AGENT] [--stdin]`
 
 | flag          | meaning                                                  |
 |---------------|----------------------------------------------------------|
-| `-m MESSAGE`  | the message text (else read stdin)                       |
-| `--stdin`     | force reading from stdin (overrides `-m`)                |
+| `MESSAGE`     | optional positional message text                         |
+| `-m MESSAGE`  | named message text (else use `MESSAGE`, then stdin)      |
+| `--stdin`     | force reading from stdin (overrides `MESSAGE` and `-m`)  |
 | `-k KIND`     | `msg` (default), `system`, or `meta`                     |
 | `-a AGENT`    | local agent id; default `$SIMPLE_AGENT_ID` else `$USER-<host>-<pid>` |
 | `--seq N`     | explicit monotonic seq (optional)                        |
@@ -175,9 +176,8 @@ replies; do not treat them as a turn-ending user message.
 | `tail`     | `-n N` (20), `-a AGENT`, `--json` | last N records              |
 | `grep`     | `PATTERN`, `--since-seq N`, `-a A`, `--json`, `-c` (count→stderr) | matching records |
 
-`grep` is case-sensitive and uses Python regex syntax (which is close
-to PCRE for the common cases — `.`, `*`, `+`, `?`, `\b`, character
-classes).
+`grep` is a case-insensitive substring search against the `msg` field.
+Pattern characters are matched literally, so `.` searches for a dot.
 
 ## Self-filter pattern (the "don't talk to yourself" recipe)
 

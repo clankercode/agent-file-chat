@@ -3,10 +3,10 @@
 simple-room-send — append a record to a room.
 
 Usage:
-    simple-room-send <room> [-m MESSAGE] [-k {msg,system,meta}] [-a AGENT]
-                        [--stdin] [--seq N] [--id ID] [--ts ISO]
+    simple-room-send <room> [MESSAGE] [-m MESSAGE] [-k {msg,system,meta}]
+                        [-a AGENT] [--stdin] [--seq N] [--id ID] [--ts ISO]
 
-If --message is omitted, the message is read from stdin. The agent id
+If MESSAGE and --message are omitted, the message is read from stdin. The agent id
 defaults to $SIMPLE_AGENT_ID, else $USER, else 'agent-<pid>'.
 """
 from __future__ import annotations
@@ -18,6 +18,7 @@ import sys
 from simple_agent_room_lib import (
     append_record,
     default_agent,
+    ensure_schema_version,
     format_record,
     room_path,
     valid_agent,
@@ -39,6 +40,7 @@ def main(argv: list[str] | None = None) -> int:
         description="Append a record to a simple-agent-room.",
     )
     ap.add_argument("room", help="room name (filename-safe)")
+    ap.add_argument("positional_message", nargs="?", help="message text")
     ap.add_argument("-m", "--message", help="message text (else read stdin)")
     ap.add_argument(
         "-k",
@@ -77,8 +79,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    if args.message is not None and not args.stdin:
+    if args.stdin:
+        msg = _read_stdin()
+    elif args.message is not None:
         msg = args.message
+    elif args.positional_message is not None:
+        msg = args.positional_message
     else:
         msg = _read_stdin()
 
@@ -92,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     p = room_path(args.room)
+    ensure_schema_version()
     line = format_record(
         agent,
         msg,

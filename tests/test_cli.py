@@ -42,6 +42,19 @@ def test_send_writes_a_record(room_dir: Path, run_cli) -> None:
     assert rec["msg"] == "hi"
 
 
+def test_send_accepts_positional_message(room_dir: Path, run_cli) -> None:
+    rc, out, err = run_cli("send", "kitchen", "stove is on", "-a", "alice")
+    assert rc == 0
+    rec = json.loads((room_dir / "kitchen.log").read_text().strip())
+    assert rec["msg"] == "stove is on"
+
+
+def test_send_creates_schema_version(room_dir: Path, run_cli) -> None:
+    rc, out, err = run_cli("send", "kitchen", "-a", "alice", "-m", "hi")
+    assert rc == 0
+    assert (room_dir / ".version").read_text() == "1\n"
+
+
 def test_send_stdin(room_dir: Path, run_cli) -> None:
     rc, out, err = run_cli("send", "kitchen", "-a", "alice", "--stdin", stdin=b"from-stdin\n")
     assert rc == 0
@@ -86,6 +99,7 @@ def test_scan_count_empty(room_dir: Path, run_cli) -> None:
     rc, out, err = run_cli("scan", "kitchen", "count")
     assert rc == 0
     assert out.strip() == "0"
+    assert (room_dir / ".version").read_text() == "1\n"
 
 
 def test_scan_count_after_sends(room_dir: Path, run_cli) -> None:
@@ -148,6 +162,20 @@ def test_scan_grep(room_dir: Path, run_cli) -> None:
     lines = [ln for ln in out.splitlines() if ln]
     assert len(lines) == 2
     assert all("hello" in ln for ln in lines)
+
+
+def test_scan_grep_is_case_insensitive_literal_substring(room_dir: Path, run_cli) -> None:
+    for msg in ("Hello world", "literal.dot", "another line"):
+        run_cli("send", "kitchen", "-a", "a", "-m", msg)
+    rc, out, err = run_cli("scan", "kitchen", "grep", "hello")
+    assert rc == 0
+    assert "Hello world" in out
+
+    rc, out, err = run_cli("scan", "kitchen", "grep", ".")
+    assert rc == 0
+    assert "literal.dot" in out
+    assert "Hello world" not in out
+    assert "another line" not in out
 
 
 def test_scan_grep_count_flag(room_dir: Path, run_cli) -> None:
@@ -331,6 +359,18 @@ def test_monitor_live_event(room_dir: Path) -> None:
     assert b"ping" in out, f"live event not seen in {dt:.2f}s"
     # Sanity: should be well under 1 second.
     assert dt < 1.5, f"inotify latency too high: {dt:.2f}s"
+
+
+def test_monitor_creates_schema_version(room_dir: Path) -> None:
+    proc = _start_monitor(room_dir, "kitchen", "--backfill", "0", agent="watcher")
+    try:
+        deadline = time.time() + 2.0
+        version = room_dir / ".version"
+        while time.time() < deadline and not version.exists():
+            time.sleep(0.05)
+        assert version.read_text() == "1\n"
+    finally:
+        _stop(proc)
 
 
 def test_monitor_grep(room_dir: Path) -> None:

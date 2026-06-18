@@ -289,3 +289,42 @@ def test_inotify_follow_sees_new_lines(room_dir: Path) -> None:
     with p.open("a") as f:
         f.write('ial","kind":"msg"}\n')
     # (we don't re-attach here; covered by the next test)
+
+
+def test_inotify_follow_reattaches_after_delete_recreate(room_dir: Path) -> None:
+    """Follower must keep watching when the room log is unlinked and recreated."""
+    import threading
+
+    p = lib.room_path("kitchen")
+    old_record = lib.format_record("old", "x" * 8)
+    lib.append_record(p, old_record)
+    old_pos = p.stat().st_size
+    new_record = lib.format_record("alice", "after-recreate-" + ("y" * old_pos))
+    assert len((new_record + "\n").encode("utf-8")) > old_pos
+    seen: list[str] = []
+    rotations: list[bool] = []
+    stop_flag = [False]
+
+    def follow() -> None:
+        lib.inotify_follow(
+            p,
+            on_line=lambda ln: seen.append(ln),
+            on_rotation=lambda: rotations.append(True),
+            stop=lambda: stop_flag[0],
+        )
+
+    t = threading.Thread(target=follow, daemon=True)
+    t.start()
+    time.sleep(0.2)
+
+    p.unlink()
+    time.sleep(0.2)
+    lib.append_record(p, new_record)
+    time.sleep(0.6)
+
+    stop_flag[0] = True
+    t.join(timeout=2.0)
+
+    assert rotations
+    parsed = [rec for rec in (lib.parse_record(line) for line in seen) if rec]
+    assert any(rec.get("msg") == "after-recreate-" + ("y" * old_pos) for rec in parsed), seen

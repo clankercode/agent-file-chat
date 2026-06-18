@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
 from simple_agent_room_lib import (
     active_agents,
+    ensure_schema_version,
     iter_records,
     record_count,
     room_path,
@@ -87,13 +87,13 @@ def cmd_tail(args: argparse.Namespace) -> int:
 
 def cmd_grep(args: argparse.Namespace) -> int:
     p = room_path(args.room)
-    pat = re.compile(args.pattern)
+    pattern = args.pattern.casefold()
     matched = 0
     for rec in iter_records(p):
         if args.agent and rec.get("agent") != args.agent:
             continue
         msg = rec.get("msg", "")
-        if not isinstance(msg, str) or not pat.search(msg):
+        if not isinstance(msg, str) or pattern not in msg.casefold():
             continue
         if isinstance(args.since_seq, int) and isinstance(rec.get("seq"), int):
             if rec["seq"] < args.since_seq:
@@ -180,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
         args = ap.parse_args([argv[0]] + argv[2:])
     except SystemExit:
         return 2
+    ensure_schema_version()
     return _DISPATCH[sub](args)
 
 

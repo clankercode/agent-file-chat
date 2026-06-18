@@ -25,6 +25,7 @@ from pathlib import Path
 
 from simple_agent_room_lib import (
     default_agent,
+    ensure_schema_version,
     inotify_follow,
     iter_records,
     room_path,
@@ -131,6 +132,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     p = room_path(args.room)
+    ensure_schema_version()
     grep_re = re.compile(args.grep) if args.grep else None
 
     def emit(line: str) -> None:

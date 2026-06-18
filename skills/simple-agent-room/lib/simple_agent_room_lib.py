@@ -280,12 +280,16 @@ def inotify_follow(
     # Position in the file we have already emitted.
     pos = path.stat().st_size
 
-    mask = (
+    file_mask = (
         pyinotify.IN_MODIFY
         | pyinotify.IN_CLOSE_WRITE
         | pyinotify.IN_MOVE_SELF
         | pyinotify.IN_DELETE_SELF
-        | pyinotify.IN_CREATE
+    )
+    parent_mask = (
+        pyinotify.IN_CREATE
+        | pyinotify.IN_MOVED_TO
+        | pyinotify.IN_CLOSE_WRITE
     )
 
     wm = pyinotify.WatchManager()
@@ -332,16 +336,31 @@ def inotify_follow(
         for ln in lines:
             on_line(ln)
 
-    def _ensure_file_watch(notifier: pyinotify.Notifier) -> None:
+    def _ensure_file_watch() -> None:
         nonlocal file_wd
         if file_wd is not None:
             try:
-                wm.rm_watch(file_wd)
+                wm.rm_watch(file_wd, quiet=True)
             except Exception:
                 pass
             file_wd = None
         if path.exists():
-            file_wd = wm.add_watch(str(path), mask, quiet=False)
+            watches = wm.add_watch(str(path), file_mask, quiet=True)
+            file_wd = watches.get(str(path))
+
+    def _remove_file_watch() -> None:
+        nonlocal file_wd
+        if file_wd is None:
+            return
+        try:
+            wm.rm_watch(file_wd, quiet=True)
+        except Exception:
+            pass
+        file_wd = None
+
+    def _reset_position() -> None:
+        nonlocal pos
+        pos = 0
 
     class _Handler(pyinotify.ProcessEvent):
         def process_IN_MODIFY(self, event):  # noqa: N802
@@ -350,40 +369,38 @@ def inotify_follow(
 
         def process_IN_CLOSE_WRITE(self, event):  # noqa: N802
             if str(event.pathname) == str(path):
+                _ensure_file_watch()
                 _drain()
 
         def process_IN_MOVE_SELF(self, event):  # noqa: N802
             if on_rotation is not None:
                 on_rotation()
-            # the wd is now invalid
-            try:
-                if file_wd is not None:
-                    wm.rm_watch(file_wd)
-            except Exception:
-                pass
-            file_wd_locals["wd"] = None  # type: ignore[name-defined]
+            _reset_position()
+            _remove_file_watch()
 
         def process_IN_DELETE_SELF(self, event):  # noqa: N802
             if on_rotation is not None:
                 on_rotation()
-            try:
-                if file_wd is not None:
-                    wm.rm_watch(file_wd)
-            except Exception:
-                pass
-            file_wd_locals["wd"] = None  # type: ignore[name-defined]
+            _reset_position()
+            _remove_file_watch()
 
         def process_IN_CREATE(self, event):  # noqa: N802
             # Recreated by some external actor; re-attach.
             if str(event.pathname) == str(path):
-                _ensure_file_watch(notifier)
+                _reset_position()
+                _ensure_file_watch()
                 _drain()
 
-    file_wd_locals: dict[str, Optional[int]] = {"wd": None}
+        def process_IN_MOVED_TO(self, event):  # noqa: N802
+            if str(event.pathname) == str(path):
+                _reset_position()
+                _ensure_file_watch()
+                _drain()
 
     handler = _Handler()
     notifier = pyinotify.Notifier(wm, handler)
-    _ensure_file_watch(notifier)
+    wm.add_watch(str(path.parent), parent_mask, quiet=True)
+    _ensure_file_watch()
     # Drain any pre-existing tail once on start (so a new subscriber sees
     # recent history if the caller wants it; callers that don't want this
     # can seek to the end themselves before calling).
