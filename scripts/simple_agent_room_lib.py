@@ -293,6 +293,16 @@ def inotify_follow(
     file_wd: Optional[int] = None
 
     def _drain() -> None:
+        """Read any new bytes from ``path`` and emit complete lines.
+
+        Reads raw bytes so ``pos`` tracks the file position exactly; a
+        trailing partial line (no closing newline) is held back and re-
+        read on the next drain.  Assumes the file is UTF-8 — ``format_record``
+        always emits valid UTF-8, so this is safe for any writer that uses
+        the lib.  If a non-lib writer appends invalid UTF-8, ``errors='replace'``
+        will substitute U+FFFD; the line still parses as garbage and is
+        silently skipped by the caller (see ``parse_record``).
+        """
         nonlocal pos
         try:
             size = path.stat().st_size

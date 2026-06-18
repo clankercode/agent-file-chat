@@ -65,25 +65,25 @@
       "id": "6",
       "subject": "Slice F: GitHub repo creation + final docs",
       "description": "gh repo create clankercode/agent-file-chat --public with description; push; write README.md (overview, install, usage, e2e) and LICENSE (MIT).",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Creating GitHub repo and final docs",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447053,
-      "updatedAt": 1781772547624
+      "updatedAt": 1781772611200
     },
     {
       "id": "7",
       "subject": "Slice G: PIRFL review pass",
       "description": "Run correctness + goal-fit + edge-case + integration reviews against acceptance criteria; fix accepted issues; commit.",
-      "status": "pending",
+      "status": "in_progress",
       "activeForm": "Running PIRFL review and fixing accepted issues",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1781760447053,
-      "updatedAt": 1781760447053
+      "updatedAt": 1781772611201
     }
   ]
 }

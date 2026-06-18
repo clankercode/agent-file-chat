@@ -157,6 +157,37 @@ def test_scan_grep_count_flag(room_dir: Path, run_cli) -> None:
     assert "4" in err  # count to stderr
 
 
+def test_monitor_backfill_all_cap(room_dir: Path) -> None:
+    """--backfill -1 must cap at SOFT_CAP (50_000) and warn on stderr."""
+    env = os.environ.copy()
+    env["SIMPLE_AGENT_ROOM_DIR"] = str(room_dir)
+    # Seed just 5 records; the cap should NOT trigger.
+    for i in range(5):
+        subprocess.run(
+            [sys.executable, str(SCRIPTS / "simple_room_send.py"),
+             "kitchen", "-a", "alice", "-m", f"m{i}"],
+            check=True, env=env,
+        )
+    proc = _start_monitor(
+        room_dir, "kitchen", "--backfill", "-1",
+        "--no-exclude-self", agent="alice",
+    )
+    try:
+        out = _drain(proc, timeout=2.0)
+        err = b""
+        try:
+            proc.communicate(timeout=1.0)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            err = proc.stderr.read() if proc.stderr else b""
+    finally:
+        _stop(proc)
+    assert "m0" in out and "m4" in out
+    # No cap warning when under SOFT_CAP.
+    assert "capped" not in out
+    assert b"capped" not in err
+
+
 def test_scan_unknown_subcommand(room_dir: Path, run_cli) -> None:
     rc, out, err = run_cli("scan", "kitchen", "bogus")
     assert rc == 2

@@ -45,16 +45,31 @@ def _format_human(rec: dict) -> str:
 
 
 def _tail_records(p: Path, n: int) -> list[dict]:
+    """Return the last ``n`` records from the room (or all if ``n == -1``).
+
+    ``--backfill -1`` is capped at 50_000 records to avoid loading a
+    multi-gigabyte room into memory; we emit a warning to stderr so the
+    user knows the backfill was truncated.
+    """
     if n == 0:
         return []
+    SOFT_CAP = 50_000
     out: list[dict] = []
+    truncated = False
     for rec in iter_records(p):
         out.append(rec)
-        if len(out) > 50_000:  # safety cap for "all"
-            out = out[-n:] if n > 0 else out
+        if n < 0 and len(out) > SOFT_CAP:
+            truncated = True
+            out = out[-SOFT_CAP:]
+    if truncated:
+        print(
+            f"simple-room-monitor: --backfill -1 capped at {SOFT_CAP} "
+            f"records; use 'simple-room-scan <room> tail' for the full file",
+            file=sys.stderr,
+        )
     if n > 0:
         return out[-n:]
-    return out  # n == -1 → all
+    return out  # n == -1 → all (capped)
 
 
 def main(argv: list[str] | None = None) -> int:
