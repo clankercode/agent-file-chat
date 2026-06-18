@@ -328,3 +328,83 @@ def test_inotify_follow_reattaches_after_delete_recreate(room_dir: Path) -> None
     assert rotations
     parsed = [rec for rec in (lib.parse_record(line) for line in seen) if rec]
     assert any(rec.get("msg") == "after-recreate-" + ("y" * old_pos) for rec in parsed), seen
+
+
+def test_inotify_follow_no_dup_after_invalid_utf8(room_dir: Path) -> None:
+    """A line with invalid UTF-8 must not desync the byte cursor.
+
+    Regression: ``_drain`` used to read text with ``errors='replace'`` and
+    advance ``pos`` by the *re-encoded* length. A non-lib writer appending a
+    raw invalid byte made each U+FFFD re-encode to 3 bytes, pushing ``pos``
+    past EOF; the next event hit the ``size < pos`` branch and re-read the
+    whole file, re-emitting earlier lines and dropping the one in between.
+    Every appended line must now be emitted exactly once.
+    """
+    import threading
+
+    p = lib.room_path("kitchen")
+    p.touch()
+    seen: list[str] = []
+    stop_flag = [False]
+
+    def follow() -> None:
+        lib.inotify_follow(
+            p, on_line=lambda ln: seen.append(ln), stop=lambda: stop_flag[0]
+        )
+
+    t = threading.Thread(target=follow, daemon=True)
+    t.start()
+    time.sleep(0.2)
+
+    lib.append_record(p, lib.format_record("a", "before"))
+    time.sleep(0.2)
+    # Non-lib writer appends a line containing an invalid UTF-8 byte.
+    with p.open("ab") as f:
+        f.write(b'{"agent":"b","msg":"bad\xffbyte"}\n')
+    time.sleep(0.2)
+    lib.append_record(p, lib.format_record("c", "after"))
+    time.sleep(0.4)
+
+    stop_flag[0] = True
+    t.join(timeout=2.0)
+
+    assert sum(1 for ln in seen if '"before"' in ln) == 1, seen
+    assert sum(1 for ln in seen if '"after"' in ln) == 1, seen
+
+
+def test_inotify_follow_handles_truncation(room_dir: Path) -> None:
+    """Truncating the room to empty then appending must not re-emit old lines.
+
+    After ``size < pos`` the cursor resets to 0; the only line emitted post-
+    truncation should be the freshly appended one.
+    """
+    import threading
+
+    p = lib.room_path("kitchen")
+    lib.append_record(p, lib.format_record("a", "old-line"))
+    seen: list[str] = []
+    stop_flag = [False]
+
+    def follow() -> None:
+        lib.inotify_follow(
+            p, on_line=lambda ln: seen.append(ln), stop=lambda: stop_flag[0]
+        )
+
+    t = threading.Thread(target=follow, daemon=True)
+    t.start()
+    time.sleep(0.2)
+
+    seen.clear()  # ignore the start-up drain of the pre-existing tail
+    with p.open("w"):
+        pass  # truncate to empty
+    time.sleep(0.2)
+    lib.append_record(p, lib.format_record("b", "fresh-line"))
+    time.sleep(0.4)
+
+    stop_flag[0] = True
+    t.join(timeout=2.0)
+
+    parsed = [rec for rec in (lib.parse_record(ln) for ln in seen) if rec]
+    msgs = [rec.get("msg") for rec in parsed]
+    assert "fresh-line" in msgs, seen
+    assert "old-line" not in msgs, seen

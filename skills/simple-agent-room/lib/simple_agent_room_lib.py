@@ -299,13 +299,16 @@ def inotify_follow(
     def _drain() -> None:
         """Read any new bytes from ``path`` and emit complete lines.
 
-        Reads raw bytes so ``pos`` tracks the file position exactly; a
-        trailing partial line (no closing newline) is held back and re-
-        read on the next drain.  Assumes the file is UTF-8 — ``format_record``
-        always emits valid UTF-8, so this is safe for any writer that uses
-        the lib.  If a non-lib writer appends invalid UTF-8, ``errors='replace'``
-        will substitute U+FFFD; the line still parses as garbage and is
-        silently skipped by the caller (see ``parse_record``).
+        Reads in **binary** mode so ``pos`` always tracks the true byte
+        offset in the file — text-mode reads with ``errors='replace'`` (or
+        CRLF translation) change the character count relative to the bytes
+        on disk, which used to desync ``pos`` and cause whole blocks of the
+        file to be re-emitted or skipped.  We split on raw ``\\n`` bytes,
+        hold back any trailing partial line (no closing newline) for the
+        next drain, and decode each complete line with ``errors='replace'``
+        so invalid UTF-8 from a non-lib writer becomes U+FFFD rather than
+        raising — the garbled line still parses as garbage and is silently
+        skipped by the caller (see ``parse_record``).
         """
         nonlocal pos
         try:
@@ -317,24 +320,25 @@ def inotify_follow(
             pos = 0
         if size == pos:
             return
-        with path.open("r", encoding="utf-8", errors="replace") as f:
-            f.seek(pos)
-            data = f.read()
-        pos += len(data.encode("utf-8", errors="replace"))
-        # Split keeping partial trailing buffer.
-        lines = data.split("\n")
-        # The last element is either '' (file ends with \\n) or a partial
-        # line; we should not emit it yet. Decrement pos by the length of
-        # the partial line so we re-read it next time.
-        if lines and lines[-1] != "":
-            partial = lines.pop()
-            partial_bytes = len(partial.encode("utf-8", errors="replace"))
-            pos -= partial_bytes
+        try:
+            with path.open("rb") as f:
+                f.seek(pos)
+                data = f.read()
+        except FileNotFoundError:
+            return
+        # Split on raw newline bytes, keeping the trailing partial buffer.
+        chunks = data.split(b"\n")
+        # The last element is either b'' (file ends with \\n) or a partial
+        # line we must not emit yet; in the latter case leave ``pos`` short
+        # of it so it is re-read (and completed) on the next drain.
+        if chunks and chunks[-1] != b"":
+            partial = chunks.pop()
+            pos += len(data) - len(partial)
         else:
-            # ends with newline; drop the empty trailing element
-            lines.pop()
-        for ln in lines:
-            on_line(ln)
+            chunks.pop()  # ends with newline; drop the empty trailing element
+            pos += len(data)
+        for chunk in chunks:
+            on_line(chunk.decode("utf-8", errors="replace"))
 
     def _ensure_file_watch() -> None:
         nonlocal file_wd
@@ -368,8 +372,13 @@ def inotify_follow(
                 _drain()
 
         def process_IN_CLOSE_WRITE(self, event):  # noqa: N802
+            # A plain write-close on the file we already watch: just drain.
+            # Re-attaching the watch here churns it and floods stderr with
+            # "Unable to retrieve Watch object" warnings under rapid writes;
+            # recreate-after-rotation is handled by IN_CREATE/IN_MOVED_TO.
             if str(event.pathname) == str(path):
-                _ensure_file_watch()
+                if file_wd is None:
+                    _ensure_file_watch()
                 _drain()
 
         def process_IN_MOVE_SELF(self, event):  # noqa: N802
