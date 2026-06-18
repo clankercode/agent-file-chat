@@ -15,10 +15,13 @@ from pathlib import Path
 
 import pytest
 
-# Make the scripts package importable from this tests/ dir.
+# After Slice F (restructure) the lib + entry-point Python lives under
+# the simple-agent-room skill, not a top-level scripts/ dir.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS_DIR = REPO_ROOT / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+LIB_DIR = REPO_ROOT / "skills" / "simple-agent-room" / "lib"
+BIN_DIR = REPO_ROOT / "skills" / "simple-agent-room" / "bin"
+SKILL_FILE = REPO_ROOT / "skills" / "simple-agent-room" / "SKILL.md"
+sys.path.insert(0, str(LIB_DIR))
 
 
 @pytest.fixture()
@@ -34,20 +37,25 @@ def room_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture()
 def scripts_dir() -> Path:
-    return SCRIPTS_DIR
+    return LIB_DIR
 
 
 @pytest.fixture()
 def run_cli():
-    """Run a simple-room-* CLI as a subprocess and capture (rc, out, err)."""
+    """Run a simple-room-* CLI as a subprocess and capture (rc, out, err).
+
+    Drives the wrapper in skills/simple-agent-room/bin/, exactly as
+    `simple-room-send` etc. behave when invoked via PATH.
+    """
     def _run(*args: str, stdin: bytes | None = None,
              env_extra: dict | None = None) -> tuple[int, str, str]:
         env = os.environ.copy()
         if env_extra:
             env.update(env_extra)
+        # args[0] is the short name: "send" | "monitor" | "scan"
+        wrapper = BIN_DIR / f"simple-room-{args[0]}"
         proc = subprocess.run(
-            [sys.executable, str(SCRIPTS_DIR / f"simple_room_{args[0]}.py"),
-             *args[1:]],
+            [sys.executable, str(wrapper), *args[1:]],
             input=stdin,
             capture_output=True,
             env=env,

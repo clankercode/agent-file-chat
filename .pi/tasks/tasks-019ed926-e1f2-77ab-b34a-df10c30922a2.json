@@ -1,4 +1,65 @@
 {
-  "nextId": 8,
-  "tasks": []
+  "nextId": 13,
+  "tasks": [
+    {
+      "id": "8",
+      "subject": "Restructure: bundle scripts into skills, one-command install",
+      "description": "Move scripts/simple_room_*.py + simple_agent_room_lib.py into skills/simple-agent-room/lib/. Add skills/simple-agent-room/bin/ with thin Python wrappers (shebang + sys.path.insert + main import). Move watch-file.sh into skills/simple-agent-comms/bin/.",
+      "status": "completed",
+      "activeForm": "Restructuring repo so each skill bundles its scripts",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781775628737,
+      "updatedAt": 1781775698256
+    },
+    {
+      "id": "9",
+      "subject": "Write install.sh + uninstall.sh",
+      "description": "Write install.sh that: (1) symlinks skills/*/ into ~/.claude/skills/ and ~/.agents/skills/, (2) symlinks each bin/* into ~/.local/bin/. Also uninstall.sh reverses it. Idempotent (skips if symlink already correct).",
+      "status": "completed",
+      "activeForm": "Writing install.sh and uninstall.sh",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781775628738,
+      "updatedAt": 1781775738400
+    },
+    {
+      "id": "10",
+      "subject": "Update SKILL.md paths and tests for new layout",
+      "description": "Update SKILL.md files to reference bin/ and lib/ subdirs. Update tests/conftest.py to point to skills/simple-agent-room/lib/. Update tests/test_install.sh to validate new layout.",
+      "status": "completed",
+      "activeForm": "Updating SKILL.md paths and tests",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781775628738,
+      "updatedAt": 1781775904952
+    },
+    {
+      "id": "11",
+      "subject": "Update README with new install steps + remove global symlinks",
+      "description": "README: replace per-script install commands with one ./install.sh + the manual ln one-liners. Update repo map. Remove the global symlinks (let install.sh do it) so the repo is the source of truth.",
+      "status": "in_progress",
+      "activeForm": "Updating README with one-command install",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781775628739,
+      "updatedAt": 1781775904953
+    },
+    {
+      "id": "12",
+      "subject": "Verify + commit restructure",
+      "description": "Run install.sh, run pytest + bash tests + e2e test, verify symlinks, commit + push.",
+      "status": "pending",
+      "activeForm": "Verifying + committing restructure",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1781775628739,
+      "updatedAt": 1781775628739
+    }
+  ]
 }

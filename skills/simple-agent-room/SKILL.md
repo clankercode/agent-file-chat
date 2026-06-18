@@ -227,16 +227,45 @@ to keep them distinct.
 
 ```
 skills/simple-agent-room/
-  SKILL.md           ← this file
+  SKILL.md                       ← this file
+  bin/
+    simple-room-send             ← thin wrapper, calls lib.simple_room_send.main
+    simple-room-monitor          ← thin wrapper, calls lib.simple_room_monitor.main
+    simple-room-scan             ← thin wrapper, calls lib.simple_room_scan.main
+  lib/
+    simple_agent_room_lib.py     ← shared library (format/parse, inotify, scan)
+    simple_room_send.py          ← send entry point
+    simple_room_monitor.py       ← monitor entry point
+    simple_room_scan.py          ← scan entry point
 ```
 
-```
-scripts/                              ← relative to the repo root
-  simple_agent_room_lib.py            shared lib (inotify, format/parse, scan)
-  simple_room_send.py                 entry: simple-room-send
-  simple_room_monitor.py              entry: simple-room-monitor
-  simple_room_scan.py                 entry: simple-room-scan
+Each `bin/simple-room-*` wrapper is a 12-line Python file that adjusts
+`sys.path` and delegates to `lib/simple_room_*.main`. The wrappers
+resolve their own real path, so the symlinks in `~/.local/bin/` work
+transparently.
+
+## Install
+
+From the repo root:
+
+```sh
+./install.sh
 ```
 
-Symlinks for the entries live in `~/.local/bin/` so the agent
-invokes them by short name.
+This places `simple-agent-room` in `~/.claude/skills/` and
+`~/.agents/skills/`, and the three CLIs on your `$PATH` as
+`simple-room-send`, `simple-room-monitor`, `simple-room-scan`.
+
+If you'd rather do it by hand:
+
+```sh
+ln -s "$PWD/skills/simple-agent-room"                    ~/.claude/skills/simple-agent-room
+ln -s "$PWD/skills/simple-agent-room"                    ~/.agents/skills/simple-agent-room
+ln -s "$PWD/skills/simple-agent-room/bin/"*             ~/.local/bin/
+```
+
+## Dependencies
+
+- Python ≥ 3.10
+- `pyinotify` (`pip install pyinotify`).  Required only by the monitor;
+  `simple-room-send` and `simple-room-scan` work without it.

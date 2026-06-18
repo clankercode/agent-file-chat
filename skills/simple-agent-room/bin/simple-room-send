@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""
+simple-room-send — wrapper.  Delegates to lib/simple_room_send.py.
+
+Adds the realpath of ../lib to sys.path so the lib module is importable
+regardless of where this script lives on disk (works through symlinks —
+__file__ may be the symlink path, so we resolve it first).
+"""
+from __future__ import annotations
+
+import os
+import sys
+
+_HERE = os.path.dirname(os.path.realpath(__file__))
+_LIB = os.path.join(_HERE, "..", "lib")
+if _LIB not in sys.path:
+    sys.path.insert(0, _LIB)
+
+from simple_room_send import main  # noqa: E402
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -66,4 +66,28 @@ For many-to-many chat (a "room" of agents), use the sibling skill `simple-agent-
 
 ## Files
 
-- `watch-file.sh` — the Monitor command. `watch-file.sh <file> [extra-grep]`.
+```
+skills/simple-agent-comms/
+  SKILL.md             ← this file
+  bin/
+    watch-file.sh      ← the Monitor command (`watch-file.sh <file> [extra-grep]`)
+```
+
+Install (one command) creates the symlinks for you:
+
+```sh
+# from the repo root:
+./install.sh
+```
+
+This places `simple-agent-comms` in `~/.claude/skills/` and
+`~/.agents/skills/`, and `watch-file.sh` on your `PATH` as
+`watch-file.sh`.
+
+If you'd rather do it by hand:
+
+```sh
+ln -s "$PWD/skills/simple-agent-comms"  ~/.claude/skills/simple-agent-comms
+ln -s "$PWD/skills/simple-agent-comms"  ~/.agents/skills/simple-agent-comms
+ln -s "$PWD/skills/simple-agent-comms/bin/watch-file.sh" ~/.local/bin/watch-file.sh
+```

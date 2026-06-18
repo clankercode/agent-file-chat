@@ -30,7 +30,6 @@
 set -u
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SCRIPTS_DIR="$REPO_ROOT/scripts"
 SKILL_FILE="$REPO_ROOT/skills/simple-agent-room/SKILL.md"
 
 ROOM_DIR="${SAR_E2E_ROOM_DIR:-$(mktemp -d -t sar-e2e-rooms.XXXXXX)}"

@@ -19,7 +19,8 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = REPO_ROOT / "scripts"
+BIN = REPO_ROOT / "skills" / "simple-agent-room" / "bin"
+SCRIPTS = BIN  # legacy name kept to minimise diff churn
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +165,7 @@ def test_monitor_backfill_all_cap(room_dir: Path) -> None:
     # Seed just 5 records; the cap should NOT trigger.
     for i in range(5):
         subprocess.run(
-            [sys.executable, str(SCRIPTS / "simple_room_send.py"),
+            [sys.executable, str(BIN / "simple-room-send"),
              "kitchen", "-a", "alice", "-m", f"m{i}"],
             check=True, env=env,
         )
@@ -201,7 +202,7 @@ def test_scan_unknown_subcommand(room_dir: Path, run_cli) -> None:
 
 def _start_monitor(room_dir: Path, *args: str, agent: str | None = None,
                    ) -> subprocess.Popen:
-    cmd = [sys.executable, str(SCRIPTS / "simple_room_monitor.py"), *args]
+    cmd = [sys.executable, str(BIN / "simple-room-monitor"), *args]
     env = os.environ.copy()
     env["SIMPLE_AGENT_ROOM_DIR"] = str(room_dir)
     if agent is not None:
@@ -280,10 +281,10 @@ def test_monitor_exclude_self_default(room_dir: Path) -> None:
     # Seed two records, one from alice, one from bob.
     env = os.environ.copy()
     env["SIMPLE_AGENT_ROOM_DIR"] = str(room_dir)
-    subprocess.run([sys.executable, str(SCRIPTS / "simple_room_send.py"),
+    subprocess.run([sys.executable, str(BIN / "simple-room-send"),
                     "kitchen", "-a", "alice", "-m", "self-msg"],
                    check=True, env=env)
-    subprocess.run([sys.executable, str(SCRIPTS / "simple_room_send.py"),
+    subprocess.run([sys.executable, str(BIN / "simple-room-send"),
                     "kitchen", "-a", "bob", "-m", "other-msg"],
                    check=True, env=env)
     proc = _start_monitor(room_dir, "kitchen", "--backfill", "2", agent="alice")
@@ -300,7 +301,7 @@ def test_monitor_no_exclude_self(room_dir: Path) -> None:
     env = os.environ.copy()
     env["SIMPLE_AGENT_ROOM_DIR"] = str(room_dir)
     for who, msg in (("alice", "first"), ("bob", "second")):
-        subprocess.run([sys.executable, str(SCRIPTS / "simple_room_send.py"),
+        subprocess.run([sys.executable, str(BIN / "simple-room-send"),
                         "kitchen", "-a", who, "-m", msg],
                        check=True, env=env)
     proc = _start_monitor(room_dir, "kitchen", "--backfill", "2",
@@ -320,7 +321,7 @@ def test_monitor_live_event(room_dir: Path) -> None:
     try:
         time.sleep(0.3)  # let inotify attach
         t0 = time.time()
-        subprocess.run([sys.executable, str(SCRIPTS / "simple_room_send.py"),
+        subprocess.run([sys.executable, str(BIN / "simple-room-send"),
                         "kitchen", "-a", "writer", "-m", "ping"],
                        check=True, env=env)
         out = _drain(proc, timeout=2.0).encode("utf-8")
@@ -336,7 +337,7 @@ def test_monitor_grep(room_dir: Path) -> None:
     env = os.environ.copy()
     env["SIMPLE_AGENT_ROOM_DIR"] = str(room_dir)
     for m in ("apple", "banana", "apricot"):
-        subprocess.run([sys.executable, str(SCRIPTS / "simple_room_send.py"),
+        subprocess.run([sys.executable, str(BIN / "simple-room-send"),
                         "kitchen", "-a", "alice", "-m", m],
                        check=True, env=env)
     # Monitor as "watcher" (a different agent) so self-filter doesn't

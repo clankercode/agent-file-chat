@@ -1,43 +1,56 @@
 # agent-file-chat
 
 Two reusable AI-agent skills (`simple-agent-comms` and `simple-agent-room`)
-plus the Python scripts that power them. Both are designed for AI agents
-that need to exchange messages without depending on a chat broker — the
-entire interface is a file on disk and a few CLI tools on `$PATH`.
+for inter-agent messaging on disk. Each skill bundles its own scripts;
+the whole thing installs with one command and ships zero Python
+packages.
 
 ## Skills
 
-| skill | when to use | files |
+| skill | when to use | ships |
 |-------|-------------|-------|
-| [`simple-agent-comms`](skills/simple-agent-comms/SKILL.md) | one-to-one streaming with a long-running subagent | two append-only files + a `Monitor` |
-| [`simple-agent-room`](skills/simple-agent-room/SKILL.md)  | many-to-many room chat | one append-only file per room + three CLIs |
+| [`simple-agent-comms`](skills/simple-agent-comms/SKILL.md) | one-to-one streaming with a long-running subagent | `bin/watch-file.sh` |
+| [`simple-agent-room`](skills/simple-agent-room/SKILL.md)  | many-to-many room chat | `bin/{simple-room-send,monitor,scan}` + `lib/` |
 
 Both are designed so the agent **never has to know the on-disk paths** —
 it just calls the tools by short name. The location is a single
 well-known directory (`~/.cache/simple-agent-room/` for rooms,
 `~/.cache/agent-comms/` for comms), overridable via env var.
 
-## Install (one-shot)
+## Install
+
+**One command** (idempotent; safe to re-run):
 
 ```sh
-# 1. clone
 git clone https://github.com/clankercode/agent-file-chat.git
 cd agent-file-chat
-
-# 2. expose the three room CLIs on $PATH
-ln -sf "$PWD/scripts/simple_room_send.py"    ~/.local/bin/simple-room-send
-ln -sf "$PWD/scripts/simple_room_monitor.py" ~/.local/bin/simple-room-monitor
-ln -sf "$PWD/scripts/simple_room_scan.py"    ~/.local/bin/simple-room-scan
-
-# 3. install the skills globally (Claude Code + pi)
-ln -snf "$PWD/skills/simple-agent-comms" ~/.claude/skills/simple-agent-comms
-ln -snf "$PWD/skills/simple-agent-room"  ~/.claude/skills/simple-agent-room
-ln -snf "$PWD/skills/simple-agent-comms" ~/.agents/skills/simple-agent-comms
-ln -snf "$PWD/skills/simple-agent-room"  ~/.agents/skills/simple-agent-room
+./install.sh
 ```
 
-Dependencies: `python3 >= 3.10` and `pyinotify` (`pip install pyinotify`
-on most distros; pre-installed on Arch / Manjaro).
+This:
+- symlinks every `skills/<skill>/` into `~/.claude/skills/` and `~/.agents/skills/`
+  (the two directories pi and Claude Code scan for `SKILL.md`)
+- symlinks every `bin/*` into `~/.local/bin/` (assumed on `$PATH`)
+
+Run `./install.sh --uninstall` to reverse it, or `--force` to overwrite
+existing symlinks.
+
+### By hand, if you'd rather
+
+```sh
+ln -s "$PWD/skills/simple-agent-comms"  ~/.claude/skills/simple-agent-comms
+ln -s "$PWD/skills/simple-agent-comms"  ~/.agents/skills/simple-agent-comms
+ln -s "$PWD/skills/simple-agent-room"   ~/.claude/skills/simple-agent-room
+ln -s "$PWD/skills/simple-agent-room"   ~/.agents/skills/simple-agent-room
+ln -s "$PWD/skills/"*/bin/*             ~/.local/bin/
+```
+
+### Dependencies
+
+- `python3 >= 3.10`
+- `pyinotify` — required only by the monitor; `simple-room-send` and
+  `simple-room-scan` work without it. (`pip install pyinotify` on most
+  distros; pre-installed on Arch / Manjaro.)
 
 ## Usage
 
@@ -70,8 +83,7 @@ for the full reference and failure modes.
 ```
 
 ```sh
-# watch-file.sh is shipped in skills/simple-agent-comms/
-~/.local/bin/watch-file.sh ~/.cache/agent-comms/alice-to-coord.md
+watch-file.sh ~/.cache/agent-comms/alice-to-coord.md
 ```
 
 See [`skills/simple-agent-comms/SKILL.md`](skills/simple-agent-comms/SKILL.md).
@@ -94,10 +106,10 @@ Each room is a JSON-Lines append-only file:
 ## Tests
 
 ```sh
-# unit + integration
+# unit + integration (49 tests)
 python3 -m pytest tests/test_unit.py tests/test_cli.py -v
 
-# install smoke + inotify timing + concurrency
+# bash: install smoke + inotify timing + concurrency
 ./tests/test_install.sh
 ./tests/test_inotify.sh
 
@@ -105,31 +117,52 @@ python3 -m pytest tests/test_unit.py tests/test_cli.py -v
 ./tests/test_e2e_pi.sh
 ```
 
-48 pytest tests + 3 bash scripts. The e2e test is skippable: if the
-model is unreachable, it exits 0 with a `SKIP:` message.
+The e2e test is skippable: if the model is unreachable, it exits 0
+with a `SKIP:` message.
 
 ## Architecture
 
 ```
-scripts/
-  simple_agent_room_lib.py     # shared lib (format, parse, inotify, scan)
-  simple_room_send.py          # entry: simple-room-send
-  simple_room_monitor.py       # entry: simple-room-monitor
-  simple_room_scan.py          # entry: simple-room-scan
-skills/
-  simple-agent-comms/
-    SKILL.md                   # the skill definition
-    watch-file.sh              # the Monitor command
-  simple-agent-room/
-    SKILL.md
-tests/
-  conftest.py
-  test_unit.py                 # 28 in-process tests
-  test_cli.py                  # 20 subprocess tests
-  test_install.sh              # bash: install smoke
-  test_inotify.sh              # bash: inotify timing + concurrency
-  test_e2e_pi.sh               # bash: tmux + two pi agents
+agent-file-chat/
+├── install.sh                       # one-command installer (idempotent)
+├── LICENSE                          # dual Unlicense + CC0-1.0
+├── README.md
+├── skills/
+│   ├── simple-agent-comms/
+│   │   ├── SKILL.md
+│   │   └── bin/
+│   │       └── watch-file.sh
+│   └── simple-agent-room/
+│       ├── SKILL.md
+│       ├── bin/
+│       │   ├── simple-room-send     # thin wrapper → lib/simple_room_send.py
+│       │   ├── simple-room-monitor  # thin wrapper → lib/simple_room_monitor.py
+│       │   └── simple-room-scan     # thin wrapper → lib/simple_room_scan.py
+│       └── lib/
+│           ├── simple_agent_room_lib.py   # shared lib
+│           ├── simple_room_send.py
+│           ├── simple_room_monitor.py
+│           └── simple_room_scan.py
+└── tests/
+    ├── conftest.py
+    ├── test_unit.py                 # 28 in-process lib tests
+    ├── test_cli.py                  # 21 subprocess entry-point tests
+    ├── test_install.sh              # install smoke + symlink validation
+    ├── test_inotify.sh              # inotify timing + 100-process concurrency
+    └── test_e2e_pi.sh               # tmux + two real pi agents
 ```
+
+The `bin/` wrappers each contain a 12-line Python file that does:
+
+```python
+_HERE = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(_HERE, "..", "lib"))
+from simple_room_send import main
+```
+
+…so the same code runs whether you invoke it as
+`skills/simple-agent-room/bin/simple-room-send` (direct) or as
+`~/.local/bin/simple-room-send` (via the install.sh symlink).
 
 ## License
 

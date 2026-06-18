@@ -219,13 +219,15 @@ def test_concurrent_append_no_torn_lines(room_dir: Path) -> None:
 
     p = lib.room_path("kitchen")
     n = 50
-    SCR = str(Path(__file__).resolve().parent.parent / "scripts")
+    # The new layout puts the wrapper at skills/simple-agent-room/bin/
+    WRAPPER = str(Path(__file__).resolve().parent.parent
+                  / "skills" / "simple-agent-room" / "bin" / "simple-room-send")
     env = os.environ.copy()
     env["SIMPLE_AGENT_ROOM_DIR"] = str(room_dir)
 
     def send(i: int) -> None:
         subprocess.run(
-            [sys.executable, f"{SCR}/simple_room_send.py",
+            [sys.executable, WRAPPER,
              "kitchen", "-a", f"w{i:02d}", "-m", f"m{i}"],
             check=True, env=env, capture_output=True,
         )
